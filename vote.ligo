@@ -12,6 +12,9 @@ type actionPause is record [
 type actionSetAdmin is record [
   user: address;
 ]
+type actionVote is record [
+  bool: vote;
+]
 
 function is_admin(const user: address; const store: storageType): bool is
     block { skip } with (user = store.admin)
@@ -39,7 +42,18 @@ function pause(const requestStatus: bool; const store: storageType): (list(opera
 function vote(const vote: bool; const store: storageType): (list(operation) * storageType) is
   begin
     const check: bool = !is_admin()
+    store.votesMap.add(vote)
   end
+
+function result(const store: storageType): bool is
+  begin
+    const true_vote := store.votesMap().count(True)
+    const false_vote := store.votesMap().count(False)
+    if(true_vote>false_vote):
+      end with True
+    if(false_vote>true_vote):
+      end with False
+  end 
 
 function main(const action : actionVote; const store: storageType) : (list(operation) * storageType) is
   block {skip} with
@@ -47,4 +61,5 @@ function main(const action : actionVote; const store: storageType) : (list(opera
     | Pause (p) -> pause (p.status, store)
     | SetAdmin (a) -> set_admin(a.user, store)
     | Vote (v) -> vote (votes.bool, store)
+    | Result (v) -> result (store)
   end
